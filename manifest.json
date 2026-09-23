@@ -1,15 +1,12 @@
 {
-  "name": "Homework Reminder",
-  "short_name": "Homework",
-  "start_url": "./",
-  "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
-  "icons": [
-    {
-      "src": "icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "MHR เตือนทำการบ้านAPP",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "MHR APP",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "lang": "th"
 }
