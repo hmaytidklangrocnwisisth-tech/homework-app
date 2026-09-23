@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งเตือนการบ้าน</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --input-bg: #f9fafb;
+            --input-border: #e5e7eb;
+            --item-bg: #f9fafb;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --modal-bg: rgba(0, 0, 0, 0.6);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --container-bg: #1e293b;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --input-bg: #0f172a;
+            --input-border: #334155;
+            --item-bg: #0f172a;
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            --modal-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background 0.5s ease, color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* หน้า Welcome เข้าสู่ระบบ */
+        .welcome-content {
+            text-align: center;
+            padding: 20px 10px;
+        }
+        .welcome-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+        .welcome-content h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text-color);
+            font-weight: 700;
+        }
+        .welcome-content p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--input-border);
+            padding-bottom: 12px;
+        }
+        .header-nav h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ปุ่ม Add หลักในหน้าจอหลัก */
+        .add-main-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: all 0.2s;
+        }
+        .add-main-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        /* ดีไซน์ Popup Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            width: 100%;
+            max-width: 480px;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+            animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--text-color);
+        }
+        .close-modal-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            font-size: 16px;
+            cursor: pointer;
+            color: var(--text-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .close-modal-btn:hover {
+            background: var(--input-border);
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 10px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .input-label {
+            display: block;
+            margin-top: 15px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* ระบบ Grid เลือกวันที่แบบสวยงาม */
+        .picker-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.3fr 1.1fr;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .picker-column {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: var(--input-bg);
+        }
+
+        .picker-header {
+            background-color: #4b5563;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+            padding: 6px 2px;
+            font-weight: 600;
+        }
+
+        .picker-column select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            text-align: center;
+            padding: 8px 2px;
+            margin: 0;
+            font-size: 13px;
+            cursor: pointer;
+            text-align-last: center;
+        }
+
+        .time-picker-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .time-box {
+            flex: 1;
+        }
+
+        .primary-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .primary-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .top-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: auto;
+            padding: 6px 12px;
+            margin-top: 0;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .icon-btn:hover {
+            background-color: var(--input-border);
+        }
+
+        ul {
+            padding-left: 0;
+            list-style: none;
+            max-height: 420px;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
+
+        li {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background: var(--item-bg);
+            padding: 16px;
+            margin-top: 12px;
+            border-radius: 12px;
+            gap: 12px;
+            border-left: 6px solid var(--primary-color);
+            border: 1px solid var(--input-border);
+            border-left-width: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        li:hover {
+            transform: translateY(-2px);
+        }
+
+        li.priority-high { border-left-color: #ef4444; }
+        li.priority-medium { border-left-color: #f59e0b; }
+        li.priority-low { border-left-color: #10b981; }
+
+        .task-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .task-info input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+            border-radius: 6px;
+        }
+
+        .task-details {
+            flex-grow: 1;
+        }
+        .task-details strong {
+            font-size: 1.05rem;
+        }
+        .task-details small {
+            color: var(--text-muted);
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .completed-task {
+            opacity: 0.5;
+            text-decoration: line-through;
+            border-left-color: #9ca3af !important;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: flex-end;
+            border-top: 1px solid var(--input-border);
+            padding-top: 10px;
+        }
+
+        .edit-btn, .delete-btn {
+            width: auto;
+            padding: 6px 14px;
+            margin-top: 0;
+            font-size: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .edit-btn:hover, .delete-btn:hover { opacity: 0.8; }
+
+        .edit-btn { background-color: #fef3c7; color: #d97706; }
+        .delete-btn { background-color: #fee2e2; color: #dc2626; }
+    </style>
+</head>
+<body lang="th">
+
+    <!-- หน้าต้อนรับ (Welcome Screen) -->
+    <div id="welcomeScreen" class="container">
+        <div class="welcome-content">
+            <div class="welcome-icon">📚</div>
+            <h2>Homework Reminder</h2>
+            <p>ระบบจดบันทึกและแจ้งเตือนการบ้าน ออกแบบให้ใช้งานง่าย สบายตา จัดการเวลาได้อย่างแม่นยำ</p>
+            <button id="enterBtn" class="primary-btn">🚀 เริ่มต้นใช้งาน</button>
+        </div>
+    </div>
+
+    <!-- หน้าจอหลัก (Main App Screen) -->
+    <div id="mainAppScreen" class="container" style="display: none;">
+        <div class="header-nav">
+            <h2>📝 รายการการบ้าน</h2>
+            <div class="top-controls">
+                <button id="themeToggleBtn" class="icon-btn">🌙 โหมด</button>
+                <button id="backBtn" class="icon-btn">🏠 หน้าแรก</button>
+            </div>
+        </div>
+
+        <!-- ปุ่มเพิ่มการบ้านแบบเปิด Popup -->
+        <button id="openModalBtn" class="add-main-btn">➕ เพิ่มการบ้านใหม่</button>
+
+        <ul id="homeworkList"></ul>
+    </div>
+
+    <!-- ป๊อปอัปฟอร์มกรอกข้อมูล -->
+    <div id="homeworkModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">📌 เพิ่มการบ้านใหม่</h3>
+                <button id="closeModalBtn" class="close-modal-btn">✕</button>
+            </div>
+
+            <form id="homeworkForm">
+                <input type="text" id="subject" placeholder="ชื่อวิชา (เช่น คณิตศาสตร์)" required>
+                <input type="text" id="task" placeholder="รายละเอียดงาน (เช่น ทำแบบฝึกหัดบทที่ 3)" required>
+                <select id="priority">
+                    <option value="low">ความสำคัญ: ปกติ (เขียว)</option>
+                    <option value="medium" selected>ความสำคัญ: ปานกลาง (เหลือง)</option>
+                    <option value="high">ความสำคัญ: ด่วนมาก (แดง)</option>
+                </select>
+                
+                <label class="input-label">📅 กำหนดวันที่ส่ง:</label>
+                <div class="picker-grid">
+                    <div class="picker-column">
+                        <div class="picker-header">วัน</div>
+                        <select id="selDayOfWeek">
+                            <option value="วันจันทร์">จันทร์</option>
+                            <option value="วันอังคาร">อังคาร</option>
+                            <option value="วันพุธ">พุธ</option>
+                            <option value="วันพฤหัสบดี">พฤหัสบดี</option>
+                            <option value="วันศุกร์">ศุกร์</option>
+                            <option value="วันเสาร์">เสาร์</option>
+                            <option value="วันอาทิตย์">อาทิตย์</option>
+                        </select>
+                    </div>
+                    <div class="picker-column">
+                        <div class="picker-header">วันที่</div>
+                        <select id="selDay">
+                            <script>
+                                for(let i=1; i<=31; i++) document.write(`<option value="${i}">${i}</option>`);
+                            </script>
+                        </select>
+                    </div>
+                    <div class="picker-column">
+                        <div class="picker-header">เดือน</div>
+                        <select id="selMonth">
+                            <option value="มกราคม">มกราคม</option>
+                            <option value="กุมภาพันธ์">กุมภาพันธ์</option>
+                            <option value="มีนาคม">มีนาคม</option>
+                            <option value="เมษายน">เมษายน</option>
+                            <option value="พฤษภาคม">พฤษภาคม</option>
+                            <option value="มิถุนายน">มิถุนายน</option>
+                            <option value="กรกฎาคม">กรกฎาคม</option>
+                            <option value="สิงหาคม">สิงหาคม</option>
+                            <option value="กันยายน">กันยายน</option>
+                            <option value="ตุลาคม">ตุลาคม</option>
+                            <option value="พฤศจิกายน">พฤศจิกายน</option>
+                            <option value="ธันวาคม">ธันวาคม</option>
+                        </select>
+                    </div>
+                    <div class="picker-column">
+                        <div class="picker-header">ปี</div>
+                        <select id="selYear">
+                            <option value="2569" selected>2569</option>
+                            <option value="2570">2570</option>
+                            <option value="2571">2571</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label class="input-label">⏰ เวลาส่ง (ชั่วโมง : นาที):</label>
+                <div class="time-picker-container">
+                    <div class="picker-column time-box">
+                        <div class="picker-header">ชม.</div>
+                        <select id="selHour">
+                            <script>
+                                for(let i=0; i<24; i++) {
+                                    let h = String(i).padStart(2, '0');
+                                    document.write(`<option value="${h}" ${i===18?'selected':''}>${h}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+                    <span style="font-weight: bold; color: var(--text-color);">:</span>
+                    <div class="picker-column time-box">
+                        <div class="picker-header">นาที</div>
+                        <select id="selMinute">
+                            <script>
+                                for(let i=0; i<60; i+=5) {
+                                    let m = String(i).padStart(2, '0');
+                                    document.write(`<option value="${m}">${m}</option>`);
+                                }
+                            </script>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-btn">💾 บันทึกการบ้าน</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let editIndex = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            document.documentElement.setAttribute("data-theme", savedTheme);
+            updateThemeButtonText(savedTheme);
+
+            if (Notification.permission !== "granted") {
+                Notification.requestPermission();
+            }
+
+            const modal = document.getElementById("homeworkModal");
+
+            document.getElementById("enterBtn").addEventListener("click", () => {
+                document.getElementById("welcomeScreen").style.display = "none";
+                document.getElementById("mainAppScreen").style.display = "block";
+                loadHomework();
+            });
+
+            document.getElementById("backBtn").addEventListener("click", () => {
+                document.getElementById("mainAppScreen").style.display = "none";
+                document.getElementById("welcomeScreen").style.display = "block";
+            });
+
+            document.getElementById("openModalBtn").addEventListener("click", () => {
+                editIndex = null;
+                document.getElementById("modalTitle").innerText = "📌 เพิ่มการบ้านใหม่";
+                document.getElementById("homeworkForm").reset();
+                modal.style.display = "flex";
+            });
+
+            document.getElementById("closeModalBtn").addEventListener("click", () => {
+                modal.style.display = "none";
+            });
+
+            document.getElementById("themeToggleBtn").addEventListener("click", () => {
+                const currentTheme = document.documentElement.getAttribute("data-theme");
+                const newTheme = currentTheme === "light" ? "dark" : "light";
+                document.documentElement.setAttribute("data-theme", newTheme);
+                localStorage.setItem("theme", newTheme);
+                updateThemeButtonText(newTheme);
+            });
+        });
+
+        function updateThemeButtonText(theme) {
+            const btn = document.getElementById("themeToggleBtn");
+            btn.innerText = theme === "light" ? "🌙 โหมดมืด" : "☀️ โหมดสว่าง";
+        }
+
+        document.getElementById("homeworkForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const subject = document.getElementById("subject").value;
+            const task = document.getElementById("task").value;
+            const priority = document.getElementById("priority").value;
+            
+            const dayOfWeek = document.getElementById("selDayOfWeek").value;
+            const day = document.getElementById("selDay").value;
+            const month = document.getElementById("selMonth").value;
+            const year = document.getElementById("selYear").value;
+            const hour = document.getElementById("selHour").value;
+            const minute = document.getElementById("selMinute").value;
+
+            const deadlineDisplay = `${dayOfWeek}ที่ ${day} ${month} ${year} เวลา ${hour}:${minute} น.`;
+
+            let homeworks = JSON.parse(localStorage.getItem("homeworks")) || [];
+
+            if (editIndex !== null) {
+                const isCompleted = homeworks[editIndex].completed || false;
+                homeworks[editIndex] = { subject, task, priority, deadlineDisplay, dayOfWeek, day, month, year, hour, minute, completed: isCompleted };
+                editIndex = null;
+                alert("อัปเดตการบ้านสำเร็จ!");
+            } else {
+                const homework = { subject, task, priority, deadlineDisplay, dayOfWeek, day, month, year, hour, minute, completed: false };
+                homeworks.push(homework);
+                alert("บันทึกการบ้านสำเร็จ!");
+            }
+
+            localStorage.setItem("homeworks", JSON.stringify(homeworks));
+            document.getElementById("homeworkModal").style.display = "none";
+            document.getElementById("homeworkForm").reset();
+            loadHomework();
+        });
+
+        function loadHomework() {
+            const list = document.getElementById("homeworkList");
+            list.innerHTML = "";
+            let homeworks = JSON.parse(localStorage.getItem("homeworks")) || [];
+            
+            if (homeworks.length === 0) {
+                list.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding: 20px;">ยังไม่มีรายการการบ้านในขณะนี้</p>`;
+                return;
+            }
+
+            homeworks.forEach((hw, index) => {
+                const li = document.createElement("li");
+                li.classList.add(`priority-${hw.priority || 'medium'}`);
+                if (hw.completed) {
+                    li.classList.add("completed-task");
+                }
+
+                li.innerHTML = `
+                    <div class="task-info">
+                        <input type="checkbox" ${hw.completed ? "checked" : ""} onclick="toggleComplete(${index})">
+                        <div class="task-details">
+                            <strong>📚 ${hw.subject}</strong><br>
+                            <span>📝 ${hw.task}</span><br>
+                            <small>📅 กำหนดส่ง: ${hw.deadlineDisplay}</small>
+                        </div>
+                    </div>
+                    <div class="action-btns">
+                        <button onclick="editHomework(${index})" class="edit-btn">แก้ไข</button>
+                        <button onclick="deleteHomework(${index})" class="delete-btn">ลบ</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function toggleComplete(index) {
+            let homeworks = JSON.parse(localStorage.getItem("homeworks")) || [];
+            homeworks[index].completed = !homeworks[index].completed;
+            localStorage.setItem("homeworks", JSON.stringify(homeworks));
+            loadHomework();
+        }
+
+        function editHomework(index) {
+            let homeworks = JSON.parse(localStorage.getItem("homeworks")) || [];
+            const hw = homeworks[index];
+            
+            document.getElementById("subject").value = hw.subject;
+            document.getElementById("task").value = hw.task;
+            document.getElementById("priority").value = hw.priority || "medium";
+            
+            if (hw.dayOfWeek) document.getElementById("selDayOfWeek").value = hw.dayOfWeek;
+            if (hw.day) document.getElementById("selDay").value = hw.day;
+            if (hw.month) document.getElementById("selMonth").value = hw.month;
+            if (hw.year) document.getElementById("selYear").value = hw.year;
+            if (hw.hour) document.getElementById("selHour").value = hw.hour;
+            if (hw.minute) document.getElementById("selMinute").value = hw.minute;
+            
+            editIndex = index;
+            document.getElementById("modalTitle").innerText = "✏️ แก้ไขการบ้าน";
+            document.getElementById("homeworkModal").style.display = "flex";
+        }
+
+        function deleteHomework(index) {
+            if (confirm("คุณต้องการลบรายการการบ้านนี้ใช่หรือไม่?")) {
+                let homeworks = JSON.parse(localStorage.getItem("homeworks")) || [];
+                homeworks.splice(index, 1);
+                localStorage.setItem("homeworks", JSON.stringify(homeworks));
+                loadHomework();
+            }
+        }
+    </script>
+</body>
+</html>
